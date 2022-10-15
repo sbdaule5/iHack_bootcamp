@@ -1,0 +1,6 @@
+# Coin_name x y  
+Coin0 6 6
+Coin1 7 3
+Coin2 4 3
+Coin3 7 2
+Coin4 5 7

@@ -1,0 +1,11 @@
+# Coin_name x y  
+Coin0 40 39
+Coin1 85 23
+Coin2 58 68
+Coin3 23 29
+Coin4 68 78
+Coin5 73 31
+Coin6 66 49
+Coin7 82 41
+Coin8 42 33
+Coin9 67 33

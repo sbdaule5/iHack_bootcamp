@@ -1,0 +1,11 @@
+# object_name   ref_object  relative_start_x relative_start_y   end_x end_y 
+Ladder0   Origin  5 3   3 -1 
+Snake1   Ladder0  -3 1   3 4 
+Snake2   Ladder0  -1 2   0 2 
+Snake3   Ladder0  -3 -1   5 4 
+Snake4   Snake2  2 -2   0 4 
+Snake5   Ladder0  2 -1   -2 3 
+Snake6   Origin  4 6   1 1 
+Snake7   Snake1  6 0   -3 2 
+Snake8   Origin  8 2   0 5 
+Ladder9   Snake8  -6 3   4 -3 

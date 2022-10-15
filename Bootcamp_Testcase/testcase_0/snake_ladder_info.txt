@@ -1,0 +1,5 @@
+# Object name    ref_obj        start_point (from ref)     End Point (from start)
+Snake1           Origin         4   5                      -1  2
+Ladder1          Snake1        -2   6                      -2 -2
+Snake2           Snake1         2   0                      -3  5
+
