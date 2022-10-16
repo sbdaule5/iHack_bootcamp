@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 from tkinter import *
+from tkinter import ttk
 
 import networkx as nx
 import threading
@@ -66,6 +67,12 @@ def createEditor(fileContent):
     widgetInfoDict["canvas"].pack(fill=BOTH, expand=True)
 
     widgetInfoDict["canvas"].pack()
+    #Creating a Scrollbar in y and x axis
+    my_vscrollbar = ttk.Scrollbar(widgetInfoDict["lf2"],orient=VERTICAL,command=widgetInfoDict["canvas"].yview)
+    my_vscrollbar.pack(side=RIGHT,fill=Y,expand=True)
+
+    my_hscrollbar = ttk.Scrollbar(widgetInfoDict["lf2"],orient=HORIZONTAL,command=widgetInfoDict["canvas"].xview)
+    my_hscrollbar.pack(side=LEFT,fill=X,expand=True)
 
     widgetInfoDict["pw"].add(widgetInfoDict["lf1"])
     widgetInfoDict["pw"].add(widgetInfoDict["lf2"])
