@@ -3,7 +3,8 @@
 from ctypes import alignment, resize
 
 import time 
-
+import numpy as np
+from scipy.sparse import csr_matrix
 from ctypes import resize
 
 
@@ -200,7 +201,11 @@ def readCoinInfoFromFile(coinInfoFile):
                                      "hence skipping this line")
                 continue
             coinInfoDict[dataLst[0]] = [int(dataLst[1]), int(dataLst[2])]
-            coinsPresenceInfo[int(dataLst[1]) * BOARD_SIZE + int(dataLst[2])] = 1
+            # coinsPresenceInfo[int(dataLst[1]) * BOARD_SIZE + int(dataLst[2])] = 1
+            H= M.tolil()
+            H[int(dataLst[1]) ,int(dataLst[2])]= 1
+            
+            
 # checking the coordinates 
 # def sanitrycheck_coins():
     
@@ -227,22 +232,32 @@ def readCoinInfoFromFile(coinInfoFile):
 
 
 def renderSnake(coords, name):
-    # if4 sanitrycheck_coins:
-    if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
-        coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
-        coinsPresenceInfo[coords[2] * BOARD_SIZE + coords[3]] = 1
-    coords = [(coord + OFFSET_FACTOR) * SCALING_FACTOR for coord in coords]
-    coordref = widgetInfoDict["canvas"].create_line(coords[0], coords[1], coords[2], coords[3], fill='red', arrow=LAST)
-    # ref 'coordref' can be used to print the coordinates of the rendered name, i.e.
-    print(widgetInfoDict["canvas"].coords(coordref))
-    # Add the shape name to the rendered name
-    if name:
-        widgetInfoDict["canvas"].create_text((coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2, text=name)
+
+    # if sanitrycheck_coins:
+        # if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
+        #     coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
+        #     coinsPresenceInfo[coords[2] * BOARD_SIZE + coords[3]] = 1
+        if H[coords[0],coords[1]]:
+            H[coords[0],coords[1]]=0
+            H[coords[2],coords[3]]=1
+        
+        coords = [(coord + OFFSET_FACTOR) * SCALING_FACTOR for coord in coords]
+        coordref = widgetInfoDict["canvas"].create_line(coords[0], coords[1], coords[2], coords[3], fill='red', arrow=LAST)
+        # ref 'coordref' can be used to print the coordinates of the rendered name, i.e.
+        print(widgetInfoDict["canvas"].coords(coordref))
+        # Add the shape name to the rendered name
+        if name:
+            widgetInfoDict["canvas"].create_text((coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2, text=name)
 
 def renderLadder(coords, name):
-    if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
-        coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
-        coinsPresenceInfo[coords[2] * BOARD_SIZE + coords[3]] = 1
+    # if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
+    #     coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
+    #     coinsPresenceInfo[coords[2] * BOARD_SIZE + coords[3]] = 1
+    if H[coords[0],coords[1]]:
+        H[coords[0],coords[1]]=0
+        H[coords[2],coords[3]]=1
+        
+
     coords = [(coord + OFFSET_FACTOR) * SCALING_FACTOR for coord in coords]
     coordref = widgetInfoDict["canvas"].create_line(coords[0], coords[1], coords[2], coords[3], fill='green',
                                                     arrow=LAST)
@@ -322,6 +337,16 @@ def calculateShapeDependency():
                                                           outNodeEndCoordY]
             renderToCanvas(outNodeDim, outNode)
     renderCoins()
+
+
+# def delete_nodes(node):
+#     for outNode in placeInfoGraph.successors(node):
+#         if outNode not in visitedNodeSet:
+#             continue
+#         visitedNodeSet.remove(placeInfoGraph.get_edge_data(front, outNode)["offset"])
+#     front = shapesToBeProcessed.remove(node)
+
+    
 
 
 ## Function to update the graph with shape as nodes and ref between shapes as arcs, properties of the shapes (
@@ -409,7 +434,9 @@ if __name__ == "__main__":
         sys.exit()
 
     BOARD_SIZE = int(sys.argv[3])
-    coinsPresenceInfo = [0] * (BOARD_SIZE ** 2)
+
+    # coinsPresenceInfo = [0] * (BOARD_SIZE ** 2) 
+    M = sparse.csr_matrix((BOARD_SIZE, BOARD_SIZE))
     readCoinInfoFromFile(sys.argv[1])
     data = fillEditor(sys.argv[2])
     createEditor(data)
