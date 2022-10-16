@@ -1,13 +1,21 @@
 #!/usr/bin/env python
+
 from ctypes import alignment, resize
+
+import time 
+
+from ctypes import resize
+
+
 import sys
 from tkinter import *
 from tkinter import ttk
 
 import networkx as nx
+import threading
 
 # modules/libs needed : networkx
-
+start= time.time()
 SCALING_FACTOR = 50
 OFFSET_FACTOR = 0.5
 # Actual value 
@@ -32,9 +40,14 @@ coinsPresenceInfo = []
 
 shapesInfoDict = {}
 
+#thread variables
+masterThread = None
+threads = []
+THREADS = 5
 ## Graph to create the hierarchy of shape create sequence and to store the shape properties
 #   Shapes are the nodes in the graph, reference shape defines the directed edge/arc between those shapes
 placeInfoGraph = nx.DiGraph()
+placeInfoGraphLock = threading.Lock() 
 
 
 ## Function to create the toplevel window, text and canvas widget
@@ -46,6 +59,7 @@ def createEditor(fileContent):
         int(widgetInfoDict["root"].winfo_screenheight() * 0.9)))
 
     # panedwindow object
+
     widgetInfoDict["pw"] = PanedWindow(widgetInfoDict["root"], orient='horizontal')
 
     widgetInfoDict["lf1"] = LabelFrame(widgetInfoDict["root"], text='Editor', width=500)
@@ -187,9 +201,33 @@ def readCoinInfoFromFile(coinInfoFile):
                 continue
             coinInfoDict[dataLst[0]] = [int(dataLst[1]), int(dataLst[2])]
             coinsPresenceInfo[int(dataLst[1]) * BOARD_SIZE + int(dataLst[2])] = 1
+# checking the coordinates 
+# def sanitrycheck_coins():
+    
+#     list_values = list(coinInfoDict.values())
+#     for i in range(len(coinInfoDict)):
+#         x = list_values[i]
+#         flag = 0
+#         if x[0]<BOARD_SIZE and x[0]>=0:
+#             if x[1]<BOARD_SIZE and x[1]>=0:
+#                 pass
+#             else:
+#                 flag = 1
+#                 break 
+#         else:
+#             flag = 1
+#             break
+#     if flag:
+#         return False
+#     else:
+#         return True
+
+# def sanitrycheck_ladder():
+
 
 
 def renderSnake(coords, name):
+    # if4 sanitrycheck_coins:
     if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
         coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
         coinsPresenceInfo[coords[2] * BOARD_SIZE + coords[3]] = 1
@@ -321,11 +359,46 @@ def placeSequence():
 
     # split the place cmds (editor data) and calculate the absolute coordinate based on offset
     editorTextLst = editorText.split("\n")
-    for line in editorTextLst:
+    n = len(editorTextLst)
+
+    global threads
+    global masterThread
+    if(len(threads) != 0):
+        masterThread.join()
+    threads = []
+    parts = []
+    for i in range(THREADS):
+        k, m = divmod(len(editorTextLst), THREADS)
+        parts = list(editorTextLst[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(THREADS))
+    for i in range(THREADS):
+        threads.append(threading.Thread(target=placeMulti, args=[parts[i]]))
+        threads[i].start()
+    masterThread = threading.Thread(target=masterFunc, args=[threads])
+    masterThread.start()
+
+#this function will be run on a seperate thread when the placeSequence is called
+#
+def placeMulti(objectList):
+    for line in objectList:
         if line.strip() == "" or "#" in line:
             continue
+        #placeInfoGraphLock.acquire() 
         addShapeDependency(line)
+       # placeInfoGraphLock.release() 
+    #move to master thread
+
+#this function will wait for all rendering threads to complete and will then render the result
+def masterFunc(threads):
+    print("INFO::Waiting for threads to finish rendering")
+    for thread in threads:
+        thread.join()
+    print("INFO::All threads joined")
+
+    placeInfoGraphLock.acquire(timeout=5) 
     calculateShapeDependency()
+    placeInfoGraphLock.release() 
+
+
 
 
 if __name__ == "__main__":
@@ -340,3 +413,5 @@ if __name__ == "__main__":
     readCoinInfoFromFile(sys.argv[1])
     data = fillEditor(sys.argv[2])
     createEditor(data)
+end = time.time()
+print(end-start)
