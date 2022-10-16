@@ -1,11 +1,13 @@
 #!/usr/bin/env python
+import time 
+
 import sys
 from tkinter import *
 
 import networkx as nx
 
 # modules/libs needed : networkx
-
+start= time.time()
 SCALING_FACTOR = 50
 OFFSET_FACTOR = 0.5
 # Actual value 
@@ -145,9 +147,33 @@ def readCoinInfoFromFile(coinInfoFile):
                 continue
             coinInfoDict[dataLst[0]] = [int(dataLst[1]), int(dataLst[2])]
             coinsPresenceInfo[int(dataLst[1]) * BOARD_SIZE + int(dataLst[2])] = 1
+# checking the coordinates 
+# def sanitrycheck_coins():
+    
+#     list_values = list(coinInfoDict.values())
+#     for i in range(len(coinInfoDict)):
+#         x = list_values[i]
+#         flag = 0
+#         if x[0]<BOARD_SIZE and x[0]>=0:
+#             if x[1]<BOARD_SIZE and x[1]>=0:
+#                 pass
+#             else:
+#                 flag = 1
+#                 break 
+#         else:
+#             flag = 1
+#             break
+#     if flag:
+#         return False
+#     else:
+#         return True
+
+# def sanitrycheck_ladder():
+
 
 
 def renderSnake(coords, name):
+    # if4 sanitrycheck_coins:
     if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
         coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
         coinsPresenceInfo[coords[2] * BOARD_SIZE + coords[3]] = 1
@@ -158,8 +184,6 @@ def renderSnake(coords, name):
     # Add the shape name to the rendered name
     if name:
         widgetInfoDict["canvas"].create_text((coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2, text=name)
-
-
 def renderLadder(coords, name):
     if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
         coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
@@ -299,3 +323,5 @@ if __name__ == "__main__":
     readCoinInfoFromFile(sys.argv[1])
     data = fillEditor(sys.argv[2])
     createEditor(data)
+end = time.time()
+print(end-start)
