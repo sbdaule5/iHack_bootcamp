@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from ctypes import resize
 import sys
 from tkinter import *
 from tkinter import ttk
@@ -60,12 +61,27 @@ def createEditor(fileContent):
     widgetInfoDict["canvas"].pack(fill=BOTH, expand=True)
 
     widgetInfoDict["canvas"].pack()
+    
     #Creating a Scrollbar in y and x axis
     my_vscrollbar = ttk.Scrollbar(widgetInfoDict["lf2"],orient=VERTICAL,command=widgetInfoDict["canvas"].yview)
     my_vscrollbar.pack(side=RIGHT,fill=Y,expand=True)
 
     my_hscrollbar = ttk.Scrollbar(widgetInfoDict["lf2"],orient=HORIZONTAL,command=widgetInfoDict["canvas"].xview)
     my_hscrollbar.pack(side=LEFT,fill=X,expand=True)
+
+    #Creating Canvas Zoom
+    
+    def size_small():
+        widgetInfoDict["canvas"].scale('all',0,0,0.5,0.5)
+
+    def size_big():
+        widgetInfoDict["canvas"].scale('all',0,0,2,2)
+
+    btn1 = Button(widgetInfoDict["lf1"],text="Zoom ++",bd=5,command= lambda: size_big())
+    btn1.pack(side='bottom')
+
+    btn2 = Button(widgetInfoDict["lf1"],text="Zoom --",bd=5,command= lambda: size_small())
+    btn2.pack(side='bottom')
 
     widgetInfoDict["pw"].add(widgetInfoDict["lf1"])
     widgetInfoDict["pw"].add(widgetInfoDict["lf2"])
