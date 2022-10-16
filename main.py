@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 import time 
 
+from ctypes import resize
+
 import sys
 from tkinter import *
+from tkinter import ttk
 
 import networkx as nx
+import threading
 
 # modules/libs needed : networkx
 start= time.time()
@@ -32,9 +36,14 @@ coinsPresenceInfo = []
 
 shapesInfoDict = {}
 
+#thread variables
+masterThread = None
+threads = []
+THREADS = 5
 ## Graph to create the hierarchy of shape create sequence and to store the shape properties
 #   Shapes are the nodes in the graph, reference shape defines the directed edge/arc between those shapes
 placeInfoGraph = nx.DiGraph()
+placeInfoGraphLock = threading.Lock() 
 
 
 ## Function to create the toplevel window, text and canvas widget
@@ -46,6 +55,7 @@ def createEditor(fileContent):
         int(widgetInfoDict["root"].winfo_screenheight() * 0.9)))
 
     # panedwindow object
+
     widgetInfoDict["pw"] = PanedWindow(widgetInfoDict["root"], orient='horizontal')
 
     widgetInfoDict["lf1"] = LabelFrame(widgetInfoDict["root"], text='Editor', width=500)
@@ -61,6 +71,27 @@ def createEditor(fileContent):
     widgetInfoDict["canvas"].pack(fill=BOTH, expand=True)
 
     widgetInfoDict["canvas"].pack()
+    
+    #Creating a Scrollbar in y and x axis
+    my_vscrollbar = ttk.Scrollbar(widgetInfoDict["lf2"],orient=VERTICAL,command=widgetInfoDict["canvas"].yview)
+    my_vscrollbar.pack(side=RIGHT,fill=Y,expand=True)
+
+    my_hscrollbar = ttk.Scrollbar(widgetInfoDict["lf2"],orient=HORIZONTAL,command=widgetInfoDict["canvas"].xview)
+    my_hscrollbar.pack(side=LEFT,fill=X,expand=True)
+
+    #Creating Canvas Zoom
+    
+    def size_small():
+        widgetInfoDict["canvas"].scale('all',0,0,0.5,0.5)
+
+    def size_big():
+        widgetInfoDict["canvas"].scale('all',0,0,2,2)
+
+    btn1 = Button(widgetInfoDict["lf1"],text="Zoom ++",bd=5,command= lambda: size_big())
+    btn1.pack(side='bottom')
+
+    btn2 = Button(widgetInfoDict["lf1"],text="Zoom --",bd=5,command= lambda: size_small())
+    btn2.pack(side='bottom')
 
     widgetInfoDict["pw"].add(widgetInfoDict["lf1"])
     widgetInfoDict["pw"].add(widgetInfoDict["lf2"])
@@ -304,11 +335,46 @@ def placeSequence():
 
     # split the place cmds (editor data) and calculate the absolute coordinate based on offset
     editorTextLst = editorText.split("\n")
-    for line in editorTextLst:
+    n = len(editorTextLst)
+
+    global threads
+    global masterThread
+    if(len(threads) != 0):
+        masterThread.join()
+    threads = []
+    parts = []
+    for i in range(THREADS):
+        k, m = divmod(len(editorTextLst), THREADS)
+        parts = list(editorTextLst[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(THREADS))
+    for i in range(THREADS):
+        threads.append(threading.Thread(target=placeMulti, args=[parts[i]]))
+        threads[i].start()
+    masterThread = threading.Thread(target=masterFunc, args=[threads])
+    masterThread.start()
+
+#this function will be run on a seperate thread when the placeSequence is called
+#
+def placeMulti(objectList):
+    for line in objectList:
         if line.strip() == "" or "#" in line:
             continue
+        #placeInfoGraphLock.acquire() 
         addShapeDependency(line)
+       # placeInfoGraphLock.release() 
+    #move to master thread
+
+#this function will wait for all rendering threads to complete and will then render the result
+def masterFunc(threads):
+    print("INFO::Waiting for threads to finish rendering")
+    for thread in threads:
+        thread.join()
+    print("INFO::All threads joined")
+
+    placeInfoGraphLock.acquire(timeout=5) 
     calculateShapeDependency()
+    placeInfoGraphLock.release() 
+
+
 
 
 if __name__ == "__main__":
