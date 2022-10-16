@@ -1,8 +1,12 @@
 #!/usr/bin/env python
+
+from ctypes import alignment, resize
+
 import time 
 import numpy as np
 from scipy.sparse import csr_matrix
 from ctypes import resize
+
 
 import sys
 from tkinter import *
@@ -73,11 +77,30 @@ def createEditor(fileContent):
 
     widgetInfoDict["canvas"].pack()
     
-    #Creating a Scrollbar in y and x axis
-    my_vscrollbar = ttk.Scrollbar(widgetInfoDict["lf2"],orient=VERTICAL,command=widgetInfoDict["canvas"].yview)
-    my_vscrollbar.pack(side=RIGHT,fill=Y,expand=True)
+    #Creating a text console
+    # def update():
+    #     print("Hello World")
 
-    my_hscrollbar = ttk.Scrollbar(widgetInfoDict["lf2"],orient=HORIZONTAL,command=widgetInfoDict["canvas"].xview)
+    def info(text):
+        widgetInfoDict["text1"].focus_set()
+        widgetInfoDict["text1"].config(state=NORMAL)
+        #widgetInfoDict["text1"].delete(0,END)
+        text += '\n'
+        widgetInfoDict["text1"].insert('1.0', text)
+        widgetInfoDict["text1"].config(state=DISABLED)
+
+    widgetInfoDict["txtcon"] = LabelFrame(widgetInfoDict["root"],text="Info Console")
+    widgetInfoDict["txtcon"].pack(expand='yes',side='bottom',fill=BOTH)
+    widgetInfoDict["text1"] = Text(widgetInfoDict["txtcon"])
+    widgetInfoDict["text1"].config(state=DISABLED)
+    widgetInfoDict["text1"].pack(fill=BOTH,expand=True)
+    info('Hi')
+    info('Hello')
+    #Creating a Scrollbar in y and x axis
+    my_vscrollbar = ttk.Scrollbar(widgetInfoDict["canvas"],orient=VERTICAL,command=widgetInfoDict["canvas"].yview)
+    my_vscrollbar.pack(anchor=W,fill=Y,expand=True)
+
+    my_hscrollbar = ttk.Scrollbar(widgetInfoDict["canvas"],orient=HORIZONTAL,command=widgetInfoDict["canvas"].xview)
     my_hscrollbar.pack(side=LEFT,fill=X,expand=True)
 
     #Creating Canvas Zoom
@@ -89,10 +112,10 @@ def createEditor(fileContent):
         widgetInfoDict["canvas"].scale('all',0,0,2,2)
 
     btn1 = Button(widgetInfoDict["lf1"],text="Zoom ++",bd=5,command= lambda: size_big())
-    btn1.pack(side='bottom')
+    btn1.pack(side='left')
 
     btn2 = Button(widgetInfoDict["lf1"],text="Zoom --",bd=5,command= lambda: size_small())
-    btn2.pack(side='bottom')
+    btn2.pack(side='left')
 
     widgetInfoDict["pw"].add(widgetInfoDict["lf1"])
     widgetInfoDict["pw"].add(widgetInfoDict["lf2"])
@@ -209,6 +232,7 @@ def readCoinInfoFromFile(coinInfoFile):
 
 
 def renderSnake(coords, name):
+
     # if sanitrycheck_coins:
         # if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
         #     coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
@@ -224,6 +248,7 @@ def renderSnake(coords, name):
         # Add the shape name to the rendered name
         if name:
             widgetInfoDict["canvas"].create_text((coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2, text=name)
+
 def renderLadder(coords, name):
     # if coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]]:
     #     coinsPresenceInfo[coords[0] * BOARD_SIZE + coords[1]] = 0
