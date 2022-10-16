@@ -3,6 +3,7 @@ import sys
 from tkinter import *
 
 import networkx as nx
+import threading
 
 # modules/libs needed : networkx
 
@@ -30,9 +31,14 @@ coinsPresenceInfo = []
 
 shapesInfoDict = {}
 
+#thread variables
+masterThread = None
+threads = []
+THREADS = 5
 ## Graph to create the hierarchy of shape create sequence and to store the shape properties
 #   Shapes are the nodes in the graph, reference shape defines the directed edge/arc between those shapes
 placeInfoGraph = nx.DiGraph()
+placeInfoGraphLock = threading.Lock() 
 
 
 ## Function to create the toplevel window, text and canvas widget
@@ -44,6 +50,7 @@ def createEditor(fileContent):
         int(widgetInfoDict["root"].winfo_screenheight() * 0.9)))
 
     # panedwindow object
+
     widgetInfoDict["pw"] = PanedWindow(widgetInfoDict["root"], orient='horizontal')
 
     widgetInfoDict["lf1"] = LabelFrame(widgetInfoDict["root"], text='Editor', width=500)
@@ -280,11 +287,46 @@ def placeSequence():
 
     # split the place cmds (editor data) and calculate the absolute coordinate based on offset
     editorTextLst = editorText.split("\n")
-    for line in editorTextLst:
+    n = len(editorTextLst)
+
+    global threads
+    global masterThread
+    if(len(threads) != 0):
+        masterThread.join()
+    threads = []
+    parts = []
+    for i in range(THREADS):
+        k, m = divmod(len(editorTextLst), THREADS)
+        parts = list(editorTextLst[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(THREADS))
+    for i in range(THREADS):
+        threads.append(threading.Thread(target=placeMulti, args=[parts[i]]))
+        threads[i].start()
+    masterThread = threading.Thread(target=masterFunc, args=[threads])
+    masterThread.start()
+
+#this function will be run on a seperate thread when the placeSequence is called
+#
+def placeMulti(objectList):
+    for line in objectList:
         if line.strip() == "" or "#" in line:
             continue
+        #placeInfoGraphLock.acquire() 
         addShapeDependency(line)
+       # placeInfoGraphLock.release() 
+    #move to master thread
+
+#this function will wait for all rendering threads to complete and will then render the result
+def masterFunc(threads):
+    print("INFO::Waiting for threads to finish rendering")
+    for thread in threads:
+        thread.join()
+    print("INFO::All threads joined")
+
+    placeInfoGraphLock.acquire(timeout=5) 
     calculateShapeDependency()
+    placeInfoGraphLock.release() 
+
+
 
 
 if __name__ == "__main__":
